@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-type ConsentState = "pending" | "agreed" | "declined";
+type ConsentState = "pending" | "intro" | "agreed" | "declined";
 
 export default function IdentificationPage() {
   const router = useRouter();
@@ -81,6 +81,47 @@ export default function IdentificationPage() {
     );
   }
 
+  if (consent === "intro") {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-lg">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+              Study Introduction
+            </h1>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm space-y-4">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+              exercitation ullamco laboris.
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+              fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+              culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac
+              turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit
+              amet, ante.
+            </p>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setConsent("agreed")}
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (consent === "pending") {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
@@ -109,7 +150,7 @@ export default function IdentificationPage() {
 
             <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setConsent("agreed")}
+                onClick={() => setConsent("intro")}
                 className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Agree
