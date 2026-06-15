@@ -3,8 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+type ConsentState = "pending" | "agreed" | "declined";
+
 export default function IdentificationPage() {
   const router = useRouter();
+  const [consent, setConsent] = useState<ConsentState>("pending");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -64,6 +67,64 @@ export default function IdentificationPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (consent === "declined") {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <p className="text-gray-600 text-sm">
+            You have declined to participate. You may close this window.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (consent === "pending") {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-lg">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+              Consent to Participate
+            </h1>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm space-y-4">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              You are invited to participate in a research study that involves rating whether an
+              image is a dark pattern or not, and reporting your rating confidence level on a scale
+              of 1 (Low) to 5 (High) for those evaluations.
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Participation is voluntary and anonymous. You may withdraw at any time without
+              penalty.
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              By selecting <strong>&ldquo;Agree,&rdquo;</strong> you provide informed consent to
+              participate; selecting <strong>&ldquo;Disagree&rdquo;</strong> will terminate
+              participation.
+            </p>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setConsent("agreed")}
+                className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                Agree
+              </button>
+              <button
+                onClick={() => setConsent("declined")}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Disagree
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
