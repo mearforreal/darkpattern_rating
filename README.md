@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dark Pattern Rating Tool
 
-## Getting Started
+A web application for human raters to annotate UI screenshots for dark pattern research.
 
-First, run the development server:
+## Setup
+
+```bash
+npm install
+```
+
+## Adding images
+
+Drop screenshots into `public/images/`. Supported formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`.
+
+Files are ordered alphabetically, so prefix filenames with numbers for a specific order:
+```
+public/images/
+  001_amazon_checkout.png
+  002_booking_urgency.png
+  003_linkedin_settings.png
+  ...
+```
+
+Then run the seed script to register them in the database:
+
+```bash
+npm run seed
+```
+
+Re-running seed is safe — it upserts images by filename and updates their order.
+
+## Running
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+SQLite database is stored at `dev.db` in the project root.
 
-## Learn More
+To apply schema changes after editing `prisma/schema.prisma`:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run db:migrate
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To browse the database visually:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:studio
+```
 
-## Deploy on Vercel
+## Exporting results
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Go to [http://localhost:3000/admin](http://localhost:3000/admin) to:
+- See all raters and their progress
+- Download **CSV** (one row per rating)
+- Download **JSON** (full structured export)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Or fetch directly:
+```
+GET /api/export/csv
+GET /api/export/json
+```
+
+## CSV format
+
+```
+rater_name, rater_email, image_filename, is_dark_pattern, confidence, comment, created_at, updated_at
+```
+
+- `is_dark_pattern`: `yes` | `no` | `unsure`
+- `confidence`: 1 (not confident) – 5 (very confident)
+
+## Keyboard shortcuts (rating page)
+
+| Key | Action |
+|-----|--------|
+| `Y` | Mark as dark pattern |
+| `N` | Mark as not a dark pattern |
+| `U` | Mark as unsure |
+| `1–5` | Set confidence level |
+| `Enter` | Next image |
+| `←` | Previous image |
+
+## Multi-rater setup
+
+Each rater identifies themselves by name + email on the landing page. The same email resumes an existing session. Multiple raters can rate the same images independently — ratings are keyed by `(rater, image)`.
+
+For inter-rater agreement analysis (Cohen's Kappa, Gwet's AC1), export the data and analyze with your preferred statistics tool.
