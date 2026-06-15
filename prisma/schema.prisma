@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Rater {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  ratings   Rating[]
+}
+
+model Image {
+  id       Int      @id @default(autoincrement())
+  filename String   @unique
+  order    Int      @unique
+  category String?
+  ratings  Rating[]
+}
+
+model Rating {
+  id            Int      @id @default(autoincrement())
+  raterId       Int
+  imageId       Int
+  isDarkPattern String   // "yes" | "no" | "unsure"
+  confidence    Int      // 1-5
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rater Rater @relation(fields: [raterId], references: [id])
+  image Image @relation(fields: [imageId], references: [id])
+
+  @@unique([raterId, imageId])
+}
