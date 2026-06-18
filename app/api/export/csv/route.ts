@@ -17,7 +17,8 @@ export async function GET() {
       orderBy: [{ rater: { email: "asc" } }, { image: { order: "asc" } }],
     });
 
-    const header = "rater_name,rater_email,image_filename,is_dark_pattern,confidence,comment,created_at,updated_at\n";
+    const header =
+      "rater_name,rater_email,image_filename,is_dark_pattern,confidence,comment,response_started_at,response_completed_at,response_time_ms,created_at,updated_at,session_started_at,session_completed_at\n";
     const rows = ratings.map((r) =>
       [
         escapeCsv(r.rater.name),
@@ -26,9 +27,14 @@ export async function GET() {
         escapeCsv(r.isDarkPattern),
         escapeCsv(String(r.confidence)),
         escapeCsv(r.comment),
+        escapeCsv(r.responseStartedAt?.toISOString()),
+        escapeCsv(r.responseCompletedAt?.toISOString()),
+        escapeCsv(r.responseTimeMs != null ? String(r.responseTimeMs) : ""),
         escapeCsv(r.createdAt.toISOString()),
         escapeCsv(r.updatedAt.toISOString()),
-      ].join(",")
+        escapeCsv(r.rater.sessionStartedAt?.toISOString()),
+        escapeCsv(r.rater.sessionCompletedAt?.toISOString()),
+      ].join(","),
     );
 
     const csv = header + rows.join("\n");
@@ -41,6 +47,9 @@ export async function GET() {
     });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

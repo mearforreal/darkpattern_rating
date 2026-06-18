@@ -8,11 +8,13 @@ datasource db {
 }
 
 model Rater {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  ratings   Rating[]
+  id                 Int       @id @default(autoincrement())
+  name               String
+  email              String    @unique
+  createdAt          DateTime  @default(now())
+  sessionStartedAt   DateTime?
+  sessionCompletedAt DateTime?
+  ratings            Rating[]
 }
 
 model Image {
@@ -24,14 +26,17 @@ model Image {
 }
 
 model Rating {
-  id            Int      @id @default(autoincrement())
-  raterId       Int
-  imageId       Int
-  isDarkPattern String // "yes" | "no" | "unsure"
-  confidence    Int // 1-5
-  comment       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                  Int       @id @default(autoincrement())
+  raterId             Int
+  imageId             Int
+  isDarkPattern       String // "yes" | "no" | "unsure"
+  confidence          Int // 1-5
+  comment             String?
+  responseStartedAt   DateTime?
+  responseCompletedAt DateTime?
+  responseTimeMs      Int?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   rater Rater @relation(fields: [raterId], references: [id])
   image Image @relation(fields: [imageId], references: [id])

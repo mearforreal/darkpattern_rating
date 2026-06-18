@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import IntroFlow from "@/app/components/IntroFlow";
 
 type RaterSession = {
   raterId: number;
   name: string;
   email: string;
   currentImageIndex: number;
+  sessionStartedAt?: string;
 };
 
 type ImageRecord = {
@@ -27,84 +29,88 @@ const EMPTY_RATING: RatingValues = { isDarkPattern: null, confidence: null, comm
 
 export default function RatePage() {
   const router = useRouter();
-  const [session, setSession] = useState<RaterSession | null>(null);
+  const [session, setSession] = useState<RaterSession | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const stored = localStorage.getItem("raterSession");
+      if (!stored) return null;
+
+      const parsed = JSON.parse(stored) as RaterSession;
+      if (!parsed.raterId) return null;
+
+      const normalizedSession = {
+        ...parsed,
+        sessionStartedAt: parsed.sessionStartedAt ?? new Date().toISOString(),
+      };
+      localStorage.setItem("raterSession", JSON.stringify(normalizedSession));
+      return normalizedSession;
+    } catch {
+      localStorage.removeItem("raterSession");
+      return null;
+    }
+  });
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [ratings, setRatings] = useState<Map<number, RatingValues>>(new Map());
-  const [current, setCurrent] = useState<RatingValues>(EMPTY_RATING);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
   const nextImageRef = useRef<string | null>(null);
+  const imageStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("raterSession");
-    if (!stored) {
+    if (!session) {
       router.replace("/");
       return;
     }
-    try {
-      const s: RaterSession = JSON.parse(stored);
-      if (!s.raterId) throw new Error("No raterId");
-      setSession(s);
 
-      Promise.all([
-        fetch("/api/images").then((r) => r.json()),
-        fetch(`/api/ratings?raterId=${s.raterId}`).then((r) => r.json()),
-      ]).then(([imgs, existingRatings]) => {
-        setImages(imgs);
-        const map = new Map<number, RatingValues>();
-        for (const r of existingRatings) {
-          map.set(r.imageId, {
-            isDarkPattern: r.isDarkPattern,
-            confidence: r.confidence,
-            comment: r.comment ?? "",
-          });
-        }
-        setRatings(map);
+    Promise.all([
+      fetch("/api/images").then((r) => r.json()),
+      fetch(`/api/ratings?raterId=${session.raterId}`).then((r) => r.json()),
+    ]).then(([imgs, existingRatings]) => {
+      setImages(imgs);
+      const map = new Map<number, RatingValues>();
+      for (const r of existingRatings) {
+        map.set(r.imageId, {
+          isDarkPattern: r.isDarkPattern,
+          confidence: r.confidence,
+          comment: r.comment ?? "",
+        });
+      }
+      setRatings(map);
 
-        // If all images have been rated, go to done regardless of stored index.
-        if (imgs.length > 0 && existingRatings.length >= imgs.length) {
-          const name = encodeURIComponent(s.name ?? "");
-          localStorage.removeItem("raterSession");
-          router.replace(`/done?name=${name}`);
-          return;
-        }
+      if (imgs.length > 0 && existingRatings.length >= imgs.length) {
+        const name = encodeURIComponent(session.name ?? "");
+        localStorage.removeItem("raterSession");
+        router.replace(`/done?name=${name}`);
+        return;
+      }
 
-        // Cap stored index against actual ratings count so stale localStorage
-        // can't skip past images cleared from the database.
-        const storedIdx = s.currentImageIndex ?? 0;
-        const idx = Math.min(storedIdx, existingRatings.length);
+      const storedIdx = session.currentImageIndex ?? 0;
+      const idx = Math.min(storedIdx, existingRatings.length);
 
-        if (idx >= imgs.length) {
-          const name = encodeURIComponent(s.name ?? "");
-          localStorage.removeItem("raterSession");
-          router.replace(`/done?name=${name}`);
-          return;
-        }
+      if (idx >= imgs.length) {
+        const name = encodeURIComponent(session.name ?? "");
+        localStorage.removeItem("raterSession");
+        router.replace(`/done?name=${name}`);
+        return;
+      }
 
-        setCurrentIndex(idx);
-        if (idx !== storedIdx) {
-          localStorage.setItem("raterSession", JSON.stringify({ ...s, currentImageIndex: idx }));
-        }
-
-        const img = imgs[idx];
-        if (img) {
-          setCurrent(map.get(img.id) ?? EMPTY_RATING);
-        }
-      });
-    } catch {
-      localStorage.removeItem("raterSession");
-      router.replace("/");
-    }
-  }, [router]);
+      setCurrentIndex(idx);
+      if (idx !== storedIdx) {
+        localStorage.setItem(
+          "raterSession",
+          JSON.stringify({ ...session, currentImageIndex: idx })
+        );
+      }
+    });
+  }, [router, session]);
 
   useEffect(() => {
     if (images.length === 0) return;
-    const img = images[currentIndex];
-    if (img) {
-      setCurrent(ratings.get(img.id) ?? EMPTY_RATING);
-    }
-  }, [currentIndex, images, ratings]);
+    imageStartedAtRef.current = Date.now();
+  }, [currentIndex, images]);
 
   useEffect(() => {
     if (images.length === 0) return;
@@ -116,46 +122,37 @@ export default function RatePage() {
     }
   }, [currentIndex, images]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLTextAreaElement) return;
-      if (e.target instanceof HTMLInputElement) return;
-
-      switch (e.key) {
-        case "y":
-        case "Y":
-          setCurrent((c) => ({ ...c, isDarkPattern: "yes" }));
-          break;
-        case "n":
-        case "N":
-          setCurrent((c) => ({ ...c, isDarkPattern: "no" }));
-          break;
-        case "1":
-        case "2":
-        case "3":
-        case "4":
-        case "5":
-          setCurrent((c) => ({ ...c, confidence: Number(e.key) }));
-          break;
-        case "Enter":
-          if (canAdvance) handleNext();
-          break;
-        case "ArrowLeft":
-          if (currentIndex > 0) handlePrev();
-          break;
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
-
+  const currentImage = images[currentIndex];
+  const current = currentImage ? (ratings.get(currentImage.id) ?? EMPTY_RATING) : EMPTY_RATING;
   const canAdvance = current.isDarkPattern !== null && current.confidence !== null;
 
+  const updateCurrentRating = useCallback(
+    (patch: Partial<RatingValues>) => {
+      if (!currentImage) return;
+
+      setRatings((prev) => {
+        const next = new Map(prev);
+        const value = next.get(currentImage.id) ?? EMPTY_RATING;
+        next.set(currentImage.id, { ...value, ...patch });
+        return next;
+      });
+    },
+    [currentImage]
+  );
+
   const saveRating = useCallback(
-    async (index: number, values: RatingValues, session: RaterSession, images: ImageRecord[]) => {
+    async (
+      index: number,
+      values: RatingValues,
+      session: RaterSession,
+      images: ImageRecord[],
+      responseStartedAt: number,
+      responseCompletedAt: number
+    ) => {
       const img = images[index];
       if (!img || !values.isDarkPattern || !values.confidence) return;
 
+      const responseTimeMs = Math.max(0, responseCompletedAt - responseStartedAt);
       const res = await fetch("/api/ratings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,6 +162,9 @@ export default function RatePage() {
           isDarkPattern: values.isDarkPattern,
           confidence: values.confidence,
           comment: values.comment || null,
+          responseStartedAt: new Date(responseStartedAt).toISOString(),
+          responseCompletedAt: new Date(responseCompletedAt).toISOString(),
+          responseTimeMs,
         }),
       });
       if (!res.ok) {
@@ -175,13 +175,22 @@ export default function RatePage() {
     []
   );
 
-  async function handleNext() {
+  const handleNext = useCallback(async () => {
     if (!session || !canAdvance) return;
     setSaving(true);
     setError("");
 
     try {
-      await saveRating(currentIndex, current, session, images);
+      const responseStartedAt = imageStartedAtRef.current ?? Date.now();
+      const responseCompletedAt = Date.now();
+      await saveRating(
+        currentIndex,
+        current,
+        session,
+        images,
+        responseStartedAt,
+        responseCompletedAt
+      );
 
       const img = images[currentIndex];
       const newRatings = new Map(ratings);
@@ -194,6 +203,15 @@ export default function RatePage() {
       setSession(newSession);
 
       if (nextIndex >= images.length) {
+        const completedAt = new Date().toISOString();
+        await fetch("/api/raters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: session.raterId,
+            sessionCompletedAt: completedAt,
+          }),
+        });
         const name = encodeURIComponent(session.name ?? "");
         localStorage.removeItem("raterSession");
         router.push(`/done?name=${name}`);
@@ -205,16 +223,25 @@ export default function RatePage() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [canAdvance, current, currentIndex, images, ratings, router, saveRating, session]);
 
-  async function handlePrev() {
+  const handlePrev = useCallback(async () => {
     if (!session || currentIndex === 0) return;
     setSaving(true);
     setError("");
 
     try {
       if (canAdvance) {
-        await saveRating(currentIndex, current, session, images);
+        const responseStartedAt = imageStartedAtRef.current ?? Date.now();
+        const responseCompletedAt = Date.now();
+        await saveRating(
+          currentIndex,
+          current,
+          session,
+          images,
+          responseStartedAt,
+          responseCompletedAt
+        );
         const img = images[currentIndex];
         const newRatings = new Map(ratings);
         newRatings.set(img.id, current);
@@ -231,14 +258,45 @@ export default function RatePage() {
     } finally {
       setSaving(false);
     }
-  }
+  }, [canAdvance, current, currentIndex, images, ratings, saveRating, session]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement) return;
+
+      switch (e.key) {
+        case "y":
+        case "Y":
+          updateCurrentRating({ isDarkPattern: "yes" });
+          break;
+        case "n":
+        case "N":
+          updateCurrentRating({ isDarkPattern: "no" });
+          break;
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5":
+          updateCurrentRating({ confidence: Number(e.key) });
+          break;
+        case "Enter":
+          if (canAdvance) handleNext();
+          break;
+        case "ArrowLeft":
+          if (currentIndex > 0) handlePrev();
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canAdvance, currentIndex, handleNext, handlePrev, updateCurrentRating]);
 
   function handleSwitchRater() {
     localStorage.removeItem("raterSession");
     router.push("/");
   }
-
-  const currentImage = images[currentIndex];
 
   if (!session || images.length === 0 || !currentImage) {
     return (
@@ -251,6 +309,7 @@ export default function RatePage() {
   const progress = (currentIndex / images.length) * 100;
 
   return (
+    <>
     <div className="flex flex-col overflow-hidden bg-gray-50" style={{ height: "100dvh" }}>
       {/* Header */}
       <header className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
@@ -326,7 +385,7 @@ export default function RatePage() {
                       name="isDarkPattern"
                       value={val}
                       checked={current.isDarkPattern === val}
-                      onChange={() => setCurrent((c) => ({ ...c, isDarkPattern: val }))}
+                      onChange={() => updateCurrentRating({ isDarkPattern: val })}
                       className="sr-only"
                     />
                     {val === "yes" ? "Yes" : "No"}
@@ -357,7 +416,7 @@ export default function RatePage() {
                         name="confidence"
                         value={n}
                         checked={current.confidence === n}
-                        onChange={() => setCurrent((c) => ({ ...c, confidence: n }))}
+                        onChange={() => updateCurrentRating({ confidence: n })}
                         className="sr-only"
                       />
                       {n}
@@ -377,7 +436,7 @@ export default function RatePage() {
                 id="comment"
                 rows={3}
                 value={current.comment}
-                onChange={(e) => setCurrent((c) => ({ ...c, comment: e.target.value }))}
+                onChange={(e) => updateCurrentRating({ comment: e.target.value })}
                 placeholder="Describe what you observed…"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
               />
@@ -386,6 +445,17 @@ export default function RatePage() {
             {error && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
             )}
+
+            <button
+              onClick={() => setShowHelp(true)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-left flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" d="M12 16v-4M12 8h.01" />
+              </svg>
+              Study instructions
+            </button>
           </div>
 
           {/* Navigation */}
@@ -412,5 +482,8 @@ export default function RatePage() {
         </div>
       </div>
     </div>
+
+    {showHelp && <IntroFlow onClose={() => setShowHelp(false)} />}
+    </>
   );
 }

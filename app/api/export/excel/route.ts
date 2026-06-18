@@ -38,6 +38,7 @@ export async function GET() {
         { header: "Confidence (1–5)", key: "confidence", width: 18 },
         { header: "Notes", key: "comment", width: 40 },
         { header: "Rated At", key: "ratedAt", width: 22 },
+        { header: "Task Duration (s)", key: "taskDurationS", width: 18 },
       ];
 
       // Style header row
@@ -54,6 +55,10 @@ export async function GET() {
           confidence: rating.confidence,
           comment: rating.comment ?? "",
           ratedAt: rating.updatedAt.toISOString().replace("T", " ").slice(0, 19),
+          taskDurationS:
+            rating.responseTimeMs != null
+              ? +(rating.responseTimeMs / 1000).toFixed(1)
+              : "",
         });
 
         // Colour-code the yes/no cell
@@ -79,7 +84,7 @@ export async function GET() {
       sheet.views = [{ state: "frozen", ySplit: 1 }];
 
       // Auto-filter on header
-      sheet.autoFilter = { from: "A1", to: "E1" };
+      sheet.autoFilter = { from: "A1", to: "F1" };
 
       // Summary row at the bottom
       if (rater.ratings.length > 0) {
@@ -88,12 +93,29 @@ export async function GET() {
         const noCount = rater.ratings.filter((r) => r.isDarkPattern === "no").length;
         const avgConf =
           rater.ratings.reduce((s, r) => s + r.confidence, 0) / rater.ratings.length;
+
+        const taskTimings = rater.ratings
+          .map((r) => r.responseTimeMs)
+          .filter((t): t is number => t != null);
+        const avgTaskS =
+          taskTimings.length > 0
+            ? (taskTimings.reduce((a, b) => a + b, 0) / taskTimings.length / 1000).toFixed(1)
+            : null;
+
+        const sessionMs =
+          rater.sessionStartedAt && rater.sessionCompletedAt
+            ? new Date(rater.sessionCompletedAt).getTime() -
+              new Date(rater.sessionStartedAt).getTime()
+            : null;
+        const sessionMin = sessionMs != null ? (sessionMs / 60_000).toFixed(1) : null;
+
         const summaryRow = sheet.addRow({
           filename: `Total: ${rater.ratings.length} rated`,
           isDarkPattern: `Yes: ${yesCount} / No: ${noCount}`,
           confidence: `Avg: ${avgConf.toFixed(1)}`,
-          comment: "",
+          comment: sessionMin != null ? `Session: ${sessionMin} min` : "",
           ratedAt: "",
+          taskDurationS: avgTaskS != null ? `Avg: ${avgTaskS}s` : "",
         });
         summaryRow.font = { bold: true, italic: true, color: { argb: "FF6B7280" } };
       }

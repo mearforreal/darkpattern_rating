@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   const raterId = req.nextUrl.searchParams.get("raterId");
   if (!raterId || isNaN(Number(raterId))) {
-    return NextResponse.json({ error: "Valid raterId is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Valid raterId is required" },
+      { status: 400 },
+    );
   }
   try {
     const ratings = await prisma.rating.findMany({
@@ -15,39 +18,99 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(ratings);
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { raterId, imageId, isDarkPattern, confidence, comment } = await req.json();
+    const {
+      raterId,
+      imageId,
+      isDarkPattern,
+      confidence,
+      comment,
+      responseStartedAt,
+      responseCompletedAt,
+      responseTimeMs,
+    } = await req.json();
 
     if (!raterId || !imageId) {
-      return NextResponse.json({ error: "raterId and imageId are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "raterId and imageId are required" },
+        { status: 400 },
+      );
     }
     if (!["yes", "no"].includes(isDarkPattern)) {
-      return NextResponse.json({ error: "isDarkPattern must be yes or no" }, { status: 400 });
+      return NextResponse.json(
+        { error: "isDarkPattern must be yes or no" },
+        { status: 400 },
+      );
     }
     if (!Number.isInteger(confidence) || confidence < 1 || confidence > 5) {
-      return NextResponse.json({ error: "confidence must be 1-5" }, { status: 400 });
+      return NextResponse.json(
+        { error: "confidence must be 1-5" },
+        { status: 400 },
+      );
+    }
+    if (
+      responseTimeMs !== undefined &&
+      (!Number.isInteger(responseTimeMs) || responseTimeMs < 0)
+    ) {
+      return NextResponse.json(
+        { error: "responseTimeMs must be a non-negative integer" },
+        { status: 400 },
+      );
     }
 
+    const responseStarted = responseStartedAt
+      ? new Date(responseStartedAt)
+      : null;
+    const responseCompleted = responseCompletedAt
+      ? new Date(responseCompletedAt)
+      : null;
+
     const rating = await prisma.rating.upsert({
-      where: { raterId_imageId: { raterId: Number(raterId), imageId: Number(imageId) } },
-      update: { isDarkPattern, confidence: Number(confidence), comment: comment ?? null },
+      where: {
+        raterId_imageId: { raterId: Number(raterId), imageId: Number(imageId) },
+      },
+      update: {
+        isDarkPattern,
+        confidence: Number(confidence),
+        comment: comment ?? null,
+        ...(responseStarted ? { responseStartedAt: responseStarted } : {}),
+        ...(responseCompleted
+          ? { responseCompletedAt: responseCompleted }
+          : {}),
+        ...(responseTimeMs !== undefined
+          ? { responseTimeMs: Number(responseTimeMs) }
+          : {}),
+      },
       create: {
         raterId: Number(raterId),
         imageId: Number(imageId),
         isDarkPattern,
         confidence: Number(confidence),
         comment: comment ?? null,
+        ...(responseStarted ? { responseStartedAt: responseStarted } : {}),
+        ...(responseCompleted
+          ? { responseCompletedAt: responseCompleted }
+          : {}),
+        ...(responseTimeMs !== undefined
+          ? { responseTimeMs: Number(responseTimeMs) }
+          : {}),
       },
     });
 
     return NextResponse.json(rating);
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -8,8 +8,26 @@ type RaterRow = {
   name: string;
   email: string;
   createdAt: string;
+  sessionStartedAt: string | null;
+  sessionCompletedAt: string | null;
+  avgTaskMs: number | null;
   _count?: { ratings: number };
 };
+
+function formatMs(ms: number): string {
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+  const m = Math.floor(ms / 60_000);
+  const s = Math.round((ms % 60_000) / 1000);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
+function sessionDuration(r: RaterRow): string {
+  if (!r.sessionStartedAt) return "—";
+  const start = new Date(r.sessionStartedAt).getTime();
+  const end = r.sessionCompletedAt ? new Date(r.sessionCompletedAt).getTime() : null;
+  if (!end) return "In progress";
+  return formatMs(end - start);
+}
 
 export default function AdminPage() {
   const [raters, setRaters] = useState<RaterRow[]>([]);
@@ -81,6 +99,8 @@ export default function AdminPage() {
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Joined</th>
+                    <th className="px-4 py-3 text-right font-medium text-gray-500">Avg Task</th>
+                    <th className="px-4 py-3 text-right font-medium text-gray-500">Session</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Progress</th>
                   </tr>
                 </thead>
@@ -94,6 +114,12 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-gray-500">{r.email}</td>
                         <td className="px-4 py-3 text-gray-400">
                           {new Date(r.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-gray-500">
+                          {r.avgTaskMs != null ? formatMs(r.avgTaskMs) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-gray-500">
+                          {sessionDuration(r)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
