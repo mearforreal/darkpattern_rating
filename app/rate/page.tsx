@@ -317,9 +317,9 @@ export default function RatePage() {
           <div className="text-sm font-medium text-gray-900">Dark Pattern Rating</div>
           <button
             onClick={handleSwitchRater}
-            className="text-xs text-gray-400 hover:text-gray-600 underline"
+            className="text-xs bg-red-400 p-2 text-white hover:bg-red-500 rounded-lg border border-red-500"
           >
-            Switch rater
+            Log out
           </button>
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -446,18 +446,18 @@ export default function RatePage() {
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               {(
                 [
-                  [0, "Introduction"],
-                  [1, "Examples"],
-                  [2, "Your Task"],
+                  [0, "Definition of Dark Patterns"],
+                  [1, "Examples of Dark Patterns"],
+                  [2, "Instructions"],
                 ] as [0 | 1 | 2, string][]
               ).map(([idx, label]) => (
                 <button
                   key={idx}
                   onClick={() => setHelpPage(idx)}
-                  className="flex-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 transition"
+                  className="rounded-lg bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 transition"
                 >
                   {label}
                 </button>
@@ -491,7 +491,7 @@ export default function RatePage() {
     </div>
 
     {helpPage !== null && (
-      <IntroFlow initialPage={helpPage} onClose={() => setHelpPage(null)} />
+      <IntroFlow initialPage={helpPage} onClose={() => setHelpPage(null)} standalone />
     )}
     </>
   );

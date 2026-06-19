@@ -34,10 +34,11 @@ function PageDots({
 
 // ── Intro Page 1: Overview ────────────────────────────────────────────────────
 
-function IntroPage1({ onNext }: { onNext: () => void }) {
+function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (hideNext) return;
     const el = ref.current;
     if (!el) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -52,7 +53,7 @@ function IntroPage1({ onNext }: { onNext: () => void }) {
       el.removeEventListener("scroll", onScroll);
       clearTimeout(timer);
     };
-  }, [onNext]);
+  }, [onNext, hideNext]);
 
   return (
     <div ref={ref} className="h-full overflow-y-auto">
@@ -144,15 +145,17 @@ function IntroPage1({ onNext }: { onNext: () => void }) {
           </div>
         </section>
 
-        <div className="flex flex-col items-center gap-1.5 pt-2">
-          <button
-            onClick={onNext}
-            className="rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition shadow-sm"
-          >
-            Next: See Examples →
-          </button>
-          <p className="text-xs text-gray-400">or scroll to continue</p>
-        </div>
+        {!hideNext && (
+          <div className="flex flex-col items-center gap-1.5 pt-2">
+            <button
+              onClick={onNext}
+              className="rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition shadow-sm"
+            >
+              Next: See Examples →
+            </button>
+            <p className="text-xs text-gray-400">or scroll to continue</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -160,10 +163,11 @@ function IntroPage1({ onNext }: { onNext: () => void }) {
 
 // ── Intro Page 2: Examples ────────────────────────────────────────────────────
 
-function IntroPage2({ onNext }: { onNext: () => void }) {
+function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (hideNext) return;
     const el = ref.current;
     if (!el) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -178,7 +182,7 @@ function IntroPage2({ onNext }: { onNext: () => void }) {
       el.removeEventListener("scroll", onScroll);
       clearTimeout(timer);
     };
-  }, [onNext]);
+  }, [onNext, hideNext]);
 
   const examples = [
     {
@@ -241,15 +245,17 @@ function IntroPage2({ onNext }: { onNext: () => void }) {
           ))}
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 pt-8">
-          <button
-            onClick={onNext}
-            className="rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition shadow-sm"
-          >
-            Next: Your Task →
-          </button>
-          <p className="text-xs text-gray-400">or scroll to continue</p>
-        </div>
+        {!hideNext && (
+          <div className="flex flex-col items-center gap-1.5 pt-8">
+            <button
+              onClick={onNext}
+              className="rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition shadow-sm"
+            >
+              Next: Your Task →
+            </button>
+            <p className="text-xs text-gray-400">or scroll to continue</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -395,9 +401,17 @@ export type IntroFlowProps = {
   loading?: boolean;
   error?: string;
   initialPage?: 0 | 1 | 2;
+  standalone?: boolean;
 };
 
-export default function IntroFlow({ onClose, onComplete, loading = false, error = "", initialPage = 0 }: IntroFlowProps) {
+export default function IntroFlow({
+  onClose,
+  onComplete,
+  loading = false,
+  error = "",
+  initialPage = 0,
+  standalone = false,
+}: IntroFlowProps) {
   const [page, setPage] = useState<number>(initialPage);
   const transitioningRef = useRef(false);
 
@@ -411,9 +425,44 @@ export default function IntroFlow({ onClose, onComplete, loading = false, error 
   const goNext = useCallback(() => goTo(page + 1), [goTo, page]);
   const goPrev = useCallback(() => goTo(page - 1), [goTo, page]);
 
+  const closeButton = (
+    <button
+      onClick={onClose}
+      className="text-gray-400 hover:text-gray-700 transition flex items-center justify-end"
+      aria-label="Close"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  );
+
+  // ── Standalone modal: single page, no slider or navigation ───────────────────
+  if (standalone) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
+        <div className="shrink-0 flex items-center justify-end px-6 py-3 border-b border-gray-100">
+          {closeButton}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          {page === 0 && <IntroPage1 onNext={goNext} hideNext />}
+          {page === 1 && <IntroPage2 onNext={goNext} hideNext />}
+          {page === 2 && (
+            <IntroPage3
+              onAction={onClose}
+              actionLabel="Close"
+              loading={loading}
+              error={error}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Full flow: sliding 3-page experience ──────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
-      {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-gray-100">
         <button
           onClick={goPrev}
@@ -423,18 +472,9 @@ export default function IntroFlow({ onClose, onComplete, loading = false, error 
           ← Back
         </button>
         <PageDots current={page} total={3} onSelect={goTo} />
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-700 transition w-20 flex justify-end"
-          aria-label="Close"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="w-20 flex justify-end">{closeButton}</div>
       </div>
 
-      {/* Sliding track */}
       <div className="flex-1 overflow-hidden relative">
         <div
           className="flex h-full transition-transform duration-500 ease-in-out"
