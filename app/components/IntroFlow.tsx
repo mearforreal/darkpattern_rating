@@ -58,7 +58,7 @@ function IntroPage1({ onNext }: { onNext: () => void }) {
     <div ref={ref} className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
-          Overview · 1 of 3
+          {/* Overview · 1 of 3 */}
         </p>
         <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
           Welcome to the Bad Default Detection Study
@@ -88,12 +88,13 @@ function IntroPage1({ onNext }: { onNext: () => void }) {
 
         <section className="mb-7">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-1 h-5 rounded-full bg-orange-400 shrink-0" />
+            <div className="w-1 h-5 rounded-full bg-orange-400 shrink-0 " />
+
             <h2 className="text-base font-semibold text-gray-900">
               What Is a Bad Default (Preselection)?
             </h2>
           </div>
-          <div className="ml-3 space-y-3 text-sm text-gray-700 leading-relaxed">
+          <div className="ml-3 bg-orange-50 border border-orange-100 rounded-xl p-4 text-sm text-gray-700 leading-relaxed">
             <p>
               Bad Defaults occur when settings, options, or actions are{" "}
               <strong>preselected in a way that benefits the provider rather than the user</strong>,
@@ -207,7 +208,7 @@ function IntroPage2({ onNext }: { onNext: () => void }) {
     <div ref={ref} className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
-          Examples · 2 of 3
+          {/* Examples · 2 of 3 */}
         </p>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Example Bad Defaults</h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
@@ -271,7 +272,7 @@ function IntroPage3({
     <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
-          Your Task · 3 of 3
+          {/* Yof 3our Task · 3  */}
         </p>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Task</h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
@@ -393,10 +394,11 @@ export type IntroFlowProps = {
   onComplete?: () => void;
   loading?: boolean;
   error?: string;
+  initialPage?: 0 | 1 | 2;
 };
 
-export default function IntroFlow({ onClose, onComplete, loading = false, error = "" }: IntroFlowProps) {
-  const [page, setPage] = useState(0);
+export default function IntroFlow({ onClose, onComplete, loading = false, error = "", initialPage = 0 }: IntroFlowProps) {
+  const [page, setPage] = useState<number>(initialPage);
   const transitioningRef = useRef(false);
 
   const goTo = useCallback((target: number) => {

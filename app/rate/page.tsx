@@ -55,7 +55,7 @@ export default function RatePage() {
   const [ratings, setRatings] = useState<Map<number, RatingValues>>(new Map());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showHelp, setShowHelp] = useState(false);
+  const [helpPage, setHelpPage] = useState<0 | 1 | 2 | null>(null);
   const nextImageRef = useRef<string | null>(null);
   const imageStartedAtRef = useRef<number | null>(null);
 
@@ -446,16 +446,23 @@ export default function RatePage() {
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
             )}
 
-            <button
-              onClick={() => setShowHelp(true)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-left flex items-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <path strokeLinecap="round" d="M12 16v-4M12 8h.01" />
-              </svg>
-              Study instructions
-            </button>
+            <div className="flex gap-2">
+              {(
+                [
+                  [0, "Introduction"],
+                  [1, "Examples"],
+                  [2, "Your Task"],
+                ] as [0 | 1 | 2, string][]
+              ).map(([idx, label]) => (
+                <button
+                  key={idx}
+                  onClick={() => setHelpPage(idx)}
+                  className="flex-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 transition"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Navigation */}
@@ -483,7 +490,9 @@ export default function RatePage() {
       </div>
     </div>
 
-    {showHelp && <IntroFlow onClose={() => setShowHelp(false)} />}
+    {helpPage !== null && (
+      <IntroFlow initialPage={helpPage} onClose={() => setHelpPage(null)} />
+    )}
     </>
   );
 }
