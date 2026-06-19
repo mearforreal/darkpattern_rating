@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 
 // ── Page dot indicator ────────────────────────────────────────────────────────
@@ -143,26 +143,6 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
 // ── Intro Page 2: Examples ────────────────────────────────────────────────────
 
 function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (hideNext) return;
-    const el = ref.current;
-    if (!el) return;
-    let timer: ReturnType<typeof setTimeout>;
-    const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 60) {
-        clearTimeout(timer);
-        timer = setTimeout(onNext, 350);
-      }
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      clearTimeout(timer);
-    };
-  }, [onNext, hideNext]);
-
   const examples = [
     {
       label: "Example 1",
@@ -188,7 +168,7 @@ function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
   ];
 
   return (
-    <div ref={ref} className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
           {/* Examples · 2 of 3 */}
