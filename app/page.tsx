@@ -8,7 +8,10 @@ type ConsentState = "pending" | "agreed" | "declined";
 
 export default function IdentificationPage() {
   const router = useRouter();
-  const [consent, setConsent] = useState<ConsentState>("pending");
+  const [consent, setConsent] = useState<ConsentState>(() => {
+    if (typeof window === "undefined") return "pending";
+    return localStorage.getItem("consent") === "agreed" ? "agreed" : "pending";
+  });
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -119,7 +122,7 @@ export default function IdentificationPage() {
             </p>
             <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setConsent("agreed")}
+                onClick={() => { localStorage.setItem("consent", "agreed"); setConsent("agreed"); }}
                 className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Agree

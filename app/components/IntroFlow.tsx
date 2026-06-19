@@ -35,28 +35,8 @@ function PageDots({
 // ── Intro Page 1: Overview ────────────────────────────────────────────────────
 
 function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (hideNext) return;
-    const el = ref.current;
-    if (!el) return;
-    let timer: ReturnType<typeof setTimeout>;
-    const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 60) {
-        clearTimeout(timer);
-        timer = setTimeout(onNext, 350);
-      }
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      clearTimeout(timer);
-    };
-  }, [onNext, hideNext]);
-
   return (
-    <div ref={ref} className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
           {/* Overview · 1 of 3 */}
@@ -153,7 +133,6 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
             >
               Next: See Examples →
             </button>
-            <p className="text-xs text-gray-400">or scroll to continue</p>
           </div>
         )}
       </div>
