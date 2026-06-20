@@ -8,10 +8,11 @@ type ConsentState = "pending" | "agreed" | "declined";
 
 export default function IdentificationPage() {
   const router = useRouter();
-  const [consent, setConsent] = useState<ConsentState>(() => {
-    if (typeof window === "undefined") return "pending";
-    return localStorage.getItem("consent") === "agreed" ? "agreed" : "pending";
-  });
+  const [consent, setConsent] = useState<ConsentState>("pending");
+
+  useEffect(() => {
+    if (localStorage.getItem("consent") === "agreed") setConsent("agreed");
+  }, []);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");

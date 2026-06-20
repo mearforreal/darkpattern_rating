@@ -58,7 +58,9 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
             <h2 className="text-base font-semibold text-gray-900">What Is a Dark Pattern?</h2>
           </div>
           <div className="ml-3 bg-orange-50 border border-orange-100 rounded-xl p-4 text-sm text-gray-700 leading-relaxed">
-            For this study, we adopt the definition proposed by Gray, Colin M., et al (2024):{" "}
+            For this study, we adopt the definition proposed by <a href="https://dl.acm.org/doi/pdf/10.1145/3613904.3642436" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              Gray, Colin M., et al (2024)
+            </a>:{" "}
             <strong>
               Dark patterns are design choices that subvert, impair, or distort a user&apos;s ability
               to make autonomous and informed decisions when interacting with digital systems,
