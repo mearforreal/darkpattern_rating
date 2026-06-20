@@ -42,7 +42,7 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
           {/* Overview · 1 of 3 */}
         </p>
         <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
-          Welcome to the Bad Default Detection Study
+          Welcome to Dark Pattern Evaluation Research
         </h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
           Thank you for participating in this research study. The purpose of this study is to
@@ -210,9 +210,9 @@ function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
               onClick={onNext}
               className="rounded-xl bg-orange-500 px-8 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition shadow-sm"
             >
-              Next: Your Task →
+              Next: Instructions →
             </button>
-            <p className="text-xs text-gray-400">or scroll to continue</p>
+            {/* <p className="text-xs text-gray-400">or scroll to continue</p> */}
           </div>
         )}
       </div>
@@ -237,9 +237,9 @@ function IntroPage3({
     <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
         <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">
-          {/* Yof 3our Task · 3  */}
+          {/* Instructions · 3 of 3 */}
         </p>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Task</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Instructions</h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
           You will be shown a series of UI screenshots. For each screenshot, complete the following
           steps:
@@ -317,8 +317,9 @@ function IntroPage3({
               "Please rely on your professional judgment.",
               "There are no trick questions.",
               "Your progress will be saved automatically.",
-              "Because this study contains a large number of screenshots, we strongly encourage you to complete the evaluation across multiple sessions rather than in a single sitting.",
-              "We also recommend taking periodic breaks to reduce fatigue and improve rating quality.",
+              "Since this task involves a large number of UI screenshots, we strongly encourage you to complete the evaluation over multiple sessions rather than in a single sitting.",
+              "Taking breaks and spreading the work across several sessions or days can help reduce fatigue and improve rating quality.",
+              "At any point during the evaluation, you may access definition and examples of the Bad Default dark pattern, and the study instructions  by clicking the corresponding blue buttons provided on each page."
             ].map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />

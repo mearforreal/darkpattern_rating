@@ -450,7 +450,7 @@ export default function RatePage() {
               {(
                 [
                   [0, "Definition of Dark Patterns"],
-                  [1, "Examples of Dark Patterns"],
+                  [1, "Examples of User Interface (UI) Designs with Bad Default Dark Pattern"],
                   [2, "Instructions"],
                 ] as [0 | 1 | 2, string][]
               ).map(([idx, label]) => (
