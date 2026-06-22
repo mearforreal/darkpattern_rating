@@ -366,7 +366,7 @@ export default function RatePage() {
             {/* Dark pattern judgment */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-3">
-                Is this a dark pattern?
+                Is Bad Default (preselection) present in the shown user interface? 
               </p>
               <div className="flex gap-3">
                 {(["yes", "no"] as const).map((val) => (
@@ -397,7 +397,7 @@ export default function RatePage() {
             {/* Confidence */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-3">
-                Confidence level
+                Select Your Confidence Level 
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400 shrink-0">Low</span>
@@ -450,7 +450,7 @@ export default function RatePage() {
               {(
                 [
                   [0, "Definition of Dark Patterns"],
-                  [1, "Examples of User Interface (UI) Designs with Bad Default Dark Pattern"],
+                  [1, "Examples of User Interface (UI)"],
                   [2, "Instructions"],
                 ] as [0 | 1 | 2, string][]
               ).map(([idx, label]) => (

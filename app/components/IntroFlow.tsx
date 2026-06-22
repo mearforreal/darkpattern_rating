@@ -34,7 +34,7 @@ function PageDots({
 
 // ── Intro Page 1: Overview ────────────────────────────────────────────────────
 
-function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
+function IntroPage1({ onNext, hideNext, onClose }: { onNext: () => void; hideNext?: boolean; onClose?: () => void }) {
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-10 pb-28">
@@ -137,6 +137,16 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
             </button>
           </div>
         )}
+        {onClose && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={onClose}
+              className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -144,7 +154,7 @@ function IntroPage1({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
 
 // ── Intro Page 2: Examples ────────────────────────────────────────────────────
 
-function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boolean }) {
+function IntroPage2({ onNext, hideNext, onClose }: { onNext: () => void; hideNext?: boolean; onClose?: () => void }) {
   const examples = [
     {
       label: "Example 1",
@@ -177,7 +187,7 @@ function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
         </p>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Example Bad Defaults</h1>
         <p className="text-sm text-gray-500 leading-relaxed mb-8">
-          Examples of the Bad Default (Preselection) Dark Pattern.
+          Examples of User Interface (UI) Designs with Bad Default Dark Patterns
         </p>
 
         <div className="space-y-6">
@@ -214,7 +224,16 @@ function IntroPage2({ onNext, hideNext }: { onNext: () => void; hideNext?: boole
             >
               Next: Instructions →
             </button>
-            {/* <p className="text-xs text-gray-400">or scroll to continue</p> */}
+          </div>
+        )}
+        {onClose && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={onClose}
+              className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm"
+            >
+              Close
+            </button>
           </div>
         )}
       </div>
@@ -320,8 +339,8 @@ function IntroPage3({
               "There are no trick questions.",
               "Your progress will be saved automatically.",
               "Since this task involves a large number of UI screenshots, we strongly encourage you to complete the evaluation over multiple sessions rather than in a single sitting.",
-              "Taking breaks and spreading the work across several sessions or days can help reduce fatigue and improve rating quality.",
-              "At any point during the evaluation, you may access definition and examples of the Bad Default dark pattern, and the study instructions  by clicking the corresponding blue buttons provided on each page."
+              "Taking breaks and spreading the work across several sessions or days can help reduce fatigue and improve rating quality. At any point during the evaluation, you may access definition and examples of the Bad Default dark pattern, and the study instructions  by clicking the corresponding blue buttons provided on each page.",
+           
             ].map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
@@ -404,11 +423,16 @@ export default function IntroFlow({
     return (
       <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
         <div className="shrink-0 flex items-center justify-end px-6 py-3 border-b border-gray-100">
-          {closeButton}
+          <button
+            onClick={onClose}
+            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition"
+          >
+            Close
+          </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          {page === 0 && <IntroPage1 onNext={goNext} hideNext />}
-          {page === 1 && <IntroPage2 onNext={goNext} hideNext />}
+          {page === 0 && <IntroPage1 onNext={goNext} hideNext onClose={onClose} />}
+          {page === 1 && <IntroPage2 onNext={goNext} hideNext onClose={onClose} />}
           {page === 2 && (
             <IntroPage3
               onAction={onClose}
